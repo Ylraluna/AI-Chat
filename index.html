@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>和她聊天</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fdf6f0;
+  --surface:#fff;
+  --surface2:#fef3ea;
+  --border:rgba(0,0,0,0.07);
+  --border2:rgba(0,0,0,0.13);
+  --text:#2d1f1f;
+  --text2:#7a5f5f;
+  --text3:#bba0a0;
+  --pink:#f472b6;
+  --pink2:#ec4899;
+  --pink-light:#fce7f3;
+  --pink-border:rgba(244,114,182,0.25);
+  --user-bg:#fff0f8;
+  --radius:16px;
+  --radius-sm:10px;
+}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ---- 顶栏 ---- */
+.header{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--surface);position:relative}
+.avatar-wrap{position:relative;flex-shrink:0}
+.ai-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#fbcfe8,#f9a8d4);display:flex;align-items:center;justify-content:center;font-size:24px;border:2px solid #fbcfe8;overflow:hidden;cursor:pointer;transition:opacity 0.2s}
+.ai-avatar:hover{opacity:0.82}
+.ai-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.upload-avatar-input{display:none}
+.avatar-upload-hint{font-size:10px;color:var(--text3);text-align:center;margin-top:2px}
+.online-dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;background:#4ade80;border:2px solid var(--surface)}
+.header-info{flex:1}
+.ai-name{font-size:15px;font-weight:500;color:var(--text)}
+.ai-status{font-size:12px;color:var(--text3);margin-top:1px}
+.header-btns{display:flex;gap:8px;margin-left:auto}
+.hbtn{background:transparent;border:1px solid var(--border2);color:var(--text2);font-size:11px;padding:5px 10px;border-radius:99px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all 0.2s;white-space:nowrap}
+.hbtn:hover{border-color:var(--pink);color:var(--pink)}
+.hbtn.pink{background:var(--pink-light);border-color:var(--pink-border);color:var(--pink)}
+.hbtn.pink:hover{background:#fce7f3}
+
+/* ---- 设置抽屉 ---- */
+.drawer{background:var(--surface);border-bottom:1px solid var(--border);overflow:hidden;max-height:0;transition:max-height 0.35s ease}
+.drawer.open{max-height:480px}
+.drawer-inner{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.drawer-section{display:flex;flex-direction:column;gap:6px}
+.drawer-label{font-size:11px;color:var(--text3);font-weight:500;letter-spacing:0.05em;text-transform:uppercase}
+.drawer-row{display:flex;gap:8px;align-items:center}
+.d-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;color:var(--text);font-family:'Noto Sans SC',sans-serif;outline:none;transition:border 0.2s}
+.d-input:focus{border-color:var(--pink-border)}
+.d-input::placeholder{color:var(--text3)}
+.d-textarea{resize:vertical;min-height:90px;line-height:1.6}
+.d-btn{padding:8px 16px;background:var(--pink);border:none;border-radius:var(--radius-sm);color:#fff;font-size:13px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:background 0.2s,transform 0.1s;white-space:nowrap}
+.d-btn:hover{background:var(--pink2)}
+.d-btn:active{transform:scale(0.97)}
+.d-hint{font-size:11px;color:var(--text3);line-height:1.5}
+.persona-name-row{display:flex;gap:8px;align-items:center}
+.persona-name-input{width:140px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;color:var(--text);font-family:'Noto Sans SC',sans-serif;outline:none;transition:border 0.2s}
+.persona-name-input:focus{border-color:var(--pink-border)}
+.persona-name-input::placeholder{color:var(--text3)}
+
+/* ---- 聊天区 ---- */
+.chat-area{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
+.chat-area::-webkit-scrollbar{width:4px}
+.chat-area::-webkit-scrollbar-track{background:transparent}
+.chat-area::-webkit-scrollbar-thumb{background:rgba(244,114,182,0.2);border-radius:2px}
+
+.msg{display:flex;gap:10px;animation:fadeUp 0.22s ease;align-items:flex-end}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg.user{flex-direction:row-reverse}
+
+.msg-avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px}
+.msg-avatar.ai-av{background:linear-gradient(135deg,#fbcfe8,#f9a8d4);border:1.5px solid #fbcfe8;overflow:hidden}
+.msg-avatar.user-av{background:var(--user-bg);border:1.5px solid var(--pink-border);font-size:16px}
+
+.bubble-wrap{display:flex;flex-direction:column;max-width:min(68%,460px)}
+.msg.user .bubble-wrap{align-items:flex-end}
+
+.bubble{padding:10px 14px;font-size:14px;line-height:1.75;word-break:break-word}
+.msg.ai .bubble{background:var(--surface);border:1px solid var(--border);border-radius:4px 16px 16px 16px;color:var(--text)}
+.msg.user .bubble{background:var(--pink-light);border:1px solid var(--pink-border);border-radius:16px 4px 16px 16px;color:var(--text)}
+
+.bubble-time{font-size:10px;color:var(--text3);margin-top:3px;padding:0 2px}
+.msg.user .bubble-time{text-align:right}
+
+.typing{display:flex;align-items:center;gap:4px;padding:6px 2px}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:bounce 1.2s infinite}
+.typing span:nth-child(2){animation-delay:0.2s}
+.typing span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+/* ---- 欢迎屏 ---- */
+.welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px 20px;text-align:center;min-height:200px}
+.welcome-emoji{font-size:52px;margin-bottom:4px}
+.welcome h2{font-size:17px;font-weight:400;color:var(--text)}
+.welcome p{font-size:13px;color:var(--text2);line-height:1.6;max-width:260px}
+.welcome-tag{display:inline-flex;background:var(--pink-light);border:1px solid var(--pink-border);color:var(--pink);font-size:11px;padding:3px 12px;border-radius:99px;margin-bottom:2px}
+
+/* ---- 输入区 ---- */
+.input-area{padding:12px 16px 16px;border-top:1px solid var(--border);background:var(--surface)}
+.input-wrap{display:flex;align-items:flex-end;gap:8px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);padding:9px 12px;transition:border 0.2s}
+.input-wrap:focus-within{border-color:var(--pink-border)}
+.msg-input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:14px;font-family:'Noto Sans SC',sans-serif;resize:none;line-height:1.6;max-height:120px;overflow-y:auto}
+.msg-input::placeholder{color:var(--text3)}
+.send-btn{width:36px;height:36px;background:var(--pink);border:none;border-radius:10px;color:#fff;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.2s,transform 0.1s}
+.send-btn:hover{background:var(--pink2)}
+.send-btn:active{transform:scale(0.93)}
+.send-btn:disabled{background:#f3d0e3;cursor:not-allowed}
+.send-btn svg{width:16px;height:16px}
+.hint{text-align:center;font-size:10px;color:var(--text3);margin-top:6px}
+
+/* ---- toast ---- */
+.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:rgba(45,31,31,0.8);color:#fff;font-size:12px;padding:7px 16px;border-radius:99px;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;backdrop-filter:blur(4px)}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="avatar-wrap">
+    <div class="ai-avatar" id="aiAvatarEmoji" onclick="document.getElementById('avatarFileInput').click()" title="点击更换头像">🐱</div>
+    <input type="file" id="avatarFileInput" class="upload-avatar-input" accept="image/*" onchange="handleAvatarUpload(event)">
+    <div class="online-dot" id="onlineDot" style="background:#ddd"></div>
+  </div>
+  <div class="header-info">
+    <div class="ai-name" id="aiNameDisplay">小猫咪</div>
+    <div class="ai-status" id="aiStatusText">配置 API Key 后开始聊天</div>
+  </div>
+  <div class="header-btns">
+    <button class="hbtn pink" onclick="toggleDrawer('persona')">🎭 人设</button>
+    <button class="hbtn" onclick="clearChat()">🗑 清空</button>
+  </div>
+</div>
+
+<!-- 人设抽屉 -->
+<div class="drawer" id="drawerPersona">
+  <div class="drawer-inner">
+    <div class="drawer-section">
+      <div class="drawer-label">她叫什么 / 头像</div>
+      <div class="persona-name-row">
+        <input class="persona-name-input" id="personaName" placeholder="给她取个名字…" value="小猫咪">
+        <input class="persona-name-input" id="personaEmoji" placeholder="备用emoji" value="🐱" style="width:90px">
+        <button class="d-btn" style="background:var(--pink-light);color:var(--pink);border:1px solid var(--pink-border)" onclick="document.getElementById('avatarFileInput').click()">📷 上传头像</button>
+        <button class="d-btn" onclick="applyPersonaName()">应用</button>
+      </div>
+      <div class="d-hint">点击顶部头像或「上传头像」选择图片；没有图片时显示 emoji。</div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-label">喂入聊天记录（模仿她的说话风格）</div>
+      <textarea class="d-input d-textarea" id="chatLog" placeholder="把和她的聊天记录粘贴进来，格式随意，越多越准确&#10;&#10;例如：&#10;A：你今天吃什么&#10;她：随便啦 吃啥都好&#10;A：那吃火锅？&#10;她：好耶！！要多辣的那种"></textarea>
+      <div class="d-hint">💡 粘贴越多的真实对话记录，模仿效果越好。系统会自动分析她的用词习惯、语气、常用表达。</div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-label">额外备注（性格、爱好、关系等）</div>
+      <textarea class="d-input" style="resize:vertical;min-height:60px;line-height:1.6" id="personaExtra" placeholder="例如：她是我高中同学，很活泼，喜欢打篮球，说话经常用「啊」「哦」结尾，有时候会撒娇…"></textarea>
+    </div>
+    <button class="d-btn" onclick="savePersona()" style="align-self:flex-start">✓ 保存人设</button>
+  </div>
+</div>
+
+
+  </div>
+</div>
+
+<div class="chat-area" id="chatArea">
+  <div class="welcome" id="welcome">
+    <div class="welcome-emoji" id="welcomeEmoji">🐱</div>
+    <div class="welcome-tag">AI 角色扮演</div>
+    <h2>嗨，我是 <span id="welcomeName">小猫咪</span></h2>
+    <p>先去「设置」填入 API Key，再去「人设」喂我聊天记录，然后我们就可以开始聊啦～</p>
+  </div>
+</div>
+
+<div class="input-area">
+  <div class="input-wrap">
+    <textarea class="msg-input" id="msgInput" rows="1" placeholder="说点什么…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2L2 7l5 1.5L8.5 14 14 2z"/>
+      </svg>
+    </button>
+  </div>
+  <div class="hint">Enter 发送 · Shift+Enter 换行</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+let avatarDataUrl = localStorage.getItem('ds_avatar') || '';
+
+function handleAvatarUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    avatarDataUrl = ev.target.result;
+    localStorage.setItem('ds_avatar', avatarDataUrl);
+    applyAvatarToUI();
+    showToast('✓ 头像已更新');
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function applyAvatarToUI() {
+  const el = document.getElementById('aiAvatarEmoji');
+  if (avatarDataUrl) {
+    el.innerHTML = '<img src="' + avatarDataUrl + '" alt="avatar">';
+  } else {
+    el.innerHTML = personaEmoji;
+  }
+  // 同步更新聊天区所有ai头像
+  document.querySelectorAll('.msg-avatar.ai-av').forEach(av => {
+    av.innerHTML = avatarDataUrl ? '<img src="' + avatarDataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : personaEmoji;
+  });
+}
+let messages = [];
+let isLoading = false;
+let systemPrompt = localStorage.getItem('ds_system') || '';
+let personaName = localStorage.getItem('ds_name') || '小猫咪';
+let personaEmoji = localStorage.getItem('ds_emoji') || '🐱';
+
+// 初始化
+setReady();
+document.getElementById('personaName').value = personaName;
+document.getElementById('personaEmoji').value = personaEmoji;
+document.getElementById('aiNameDisplay').textContent = personaName;
+document.getElementById('aiAvatarEmoji').textContent = personaEmoji;
+document.getElementById('welcomeName').textContent = personaName;
+document.getElementById('welcomeEmoji').textContent = personaEmoji;
+if (localStorage.getItem('ds_chatlog')) document.getElementById('chatLog').value = localStorage.getItem('ds_chatlog');
+if (avatarDataUrl) applyAvatarToUI();
+if (localStorage.getItem('ds_extra')) document.getElementById('personaExtra').value = localStorage.getItem('ds_extra');
+
+function sanitizeKey(raw) { return raw.replace(/[^\x20-\x7E]/g,'').trim(); }
+
+function setReady() {
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('onlineDot').style.background = '#4ade80';
+  document.getElementById('aiStatusText').textContent = '在线';
+}
+
+function saveKey() {
+  const val = sanitizeKey(document.getElementById('apiKey').value);
+  if (!val) { showToast('请输入 API Key'); return; }
+  apiKey = val;
+  document.getElementById('apiKey').value = val;
+  localStorage.setItem('ds_api_key', apiKey);
+  setReady();
+  showToast('✓ API Key 已保存');
+  closeAllDrawers();
+}
+
+function applyPersonaName() {
+  const n = document.getElementById('personaName').value.trim() || '小猫咪';
+  const e = document.getElementById('personaEmoji').value.trim() || '🐱';
+  personaName = n; personaEmoji = e;
+  document.getElementById('aiNameDisplay').textContent = n;
+  // 只有没有图片时才显示emoji，有图片就保持图片
+  if (!avatarDataUrl) {
+    document.getElementById('aiAvatarEmoji').textContent = e;
+    document.getElementById('welcomeEmoji').textContent = e;
+  }
+  document.getElementById('welcomeName').textContent = n;
+}
+
+function savePersona() {
+  applyPersonaName();
+  const chatLog = document.getElementById('chatLog').value.trim();
+  const extra = document.getElementById('personaExtra').value.trim();
+  localStorage.setItem('ds_name', personaName);
+  localStorage.setItem('ds_emoji', personaEmoji);
+  localStorage.setItem('ds_chatlog', chatLog);
+  localStorage.setItem('ds_extra', extra);
+
+  let prompt = `你现在要扮演一个叫「${personaName}」的真实人物，和用户自然地聊天。不要暴露自己是AI，就像真正的${personaName}在和朋友发消息一样。`;
+
+  if (chatLog) {
+    prompt += `\n\n以下是${personaName}的真实聊天记录，请仔细学习她的说话风格、语气、用词习惯、表情符号使用方式、句子长短等特点：\n\n---\n${chatLog}\n---\n\n请严格模仿上述聊天记录中的说话风格来回复用户，包括：用词习惯、语气词、标点符号的使用方式、回复的长短节奏等。`;
+  }
+
+  if (extra) {
+    prompt += `\n\n关于${personaName}的额外信息：${extra}`;
+  }
+
+  prompt += `\n\n重要提示：只输出${personaName}说的话本身，不要加任何旁白、描述或括号注释。回复要自然，像真实发消息一样。`;
+
+  systemPrompt = prompt;
+  localStorage.setItem('ds_system', systemPrompt);
+  messages = [];
+  showToast('✓ 人设已保存，对话已重置');
+  closeAllDrawers();
+}
+
+let openDrawer = null;
+function toggleDrawer(name) {
+  const el = document.getElementById('drawer' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (openDrawer && openDrawer !== el) { openDrawer.classList.remove('open'); }
+  el.classList.toggle('open');
+  openDrawer = el.classList.contains('open') ? el : null;
+}
+function closeAllDrawers() {
+  document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
+  openDrawer = null;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function clearChat() {
+  messages = [];
+  const area = document.getElementById('chatArea');
+  area.innerHTML = `<div class="welcome" id="welcome">
+    <div class="welcome-emoji">${personaEmoji}</div>
+    <div class="welcome-tag">AI 角色扮演</div>
+    <h2>嗨，我是 <span>${personaName}</span></h2>
+    <p>人设已加载，随时开始聊吧～</p>
+  </div>`;
+  showToast('对话已清空');
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+}
+function getTime() {
+  return new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+}
+
+function addMsg(role, content) {
+  const area = document.getElementById('chatArea');
+  const welcome = document.getElementById('welcome');
+  if (welcome) welcome.remove();
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const aiAvContent = avatarDataUrl ? `<img src="${avatarDataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : personaEmoji;
+  const avatarHtml = role === 'ai'
+    ? `<div class="msg-avatar ai-av">${aiAvContent}</div>`
+    : `<div class="msg-avatar user-av">🙂</div>`;
+  div.innerHTML = `${avatarHtml}<div class="bubble-wrap"><div class="bubble">${content}</div><div class="bubble-time">${getTime()}</div></div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function addTyping() {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'msg ai'; div.id = 'typingMsg';
+  const tAvContent = avatarDataUrl ? `<img src="${avatarDataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : personaEmoji;
+  div.innerHTML = `<div class="msg-avatar ai-av">${tAvContent}</div><div class="bubble-wrap"><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+async function sendMsg() {
+  if (isLoading) return;
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = ''; input.style.height = 'auto';
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('aiStatusText').textContent = '正在输入…';
+
+  messages.push({ role: 'user', content: text });
+  addMsg('user', escapeHtml(text));
+  addTyping();
+
+  try {
+    const fullMessages = systemPrompt
+      ? [{ role: 'system', content: systemPrompt }, ...messages]
+      : messages;
+    const body = { model: 'deepseek-chat', messages: fullMessages, max_tokens: 1024, temperature: 0.9 };
+
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const typing = document.getElementById('typingMsg');
+    if (typing) typing.remove();
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      addMsg('ai', `⚠️ ${escapeHtml(err.error?.message || '请求失败 ' + res.status)}`);
+      messages.pop();
+    } else {
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content || '（无回复）';
+      messages.push({ role: 'assistant', content: reply });
+      addMsg('ai', escapeHtml(reply));
+    }
+  } catch(e) {
+    const typing = document.getElementById('typingMsg');
+    if (typing) typing.remove();
+    addMsg('ai', `⚠️ 网络错误：${escapeHtml(e.message)}`);
+    messages.pop();
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('aiStatusText').textContent = '在线';
+}
+</script>
+</body>
+</html>
